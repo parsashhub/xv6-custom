@@ -75,6 +75,78 @@ void runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit(1);
+
+    if (ecmd->argv[0] && strcmp(ecmd->argv[0], "!") == 0) {
+      if (ecmd->argv[1]) {
+        // Concatenate all arguments into a single message
+        char message[512] = "";
+        int total_len = 0;
+        int i = 1;
+        
+        // Combine all arguments with spaces between them
+        while (ecmd->argv[i] != 0 && total_len < 512) {
+          int arg_len = strlen(ecmd->argv[i]);
+          
+          // Add space between arguments (except before the first one)
+          if (i > 1 && total_len + 1 < 512) {
+            strcat(message, " ");
+            total_len++;
+          }
+          
+          // Check if adding this argument would exceed the buffer
+          if (total_len + arg_len < 512) {
+            strcat(message, ecmd->argv[i]);
+            total_len += arg_len;
+          } else {
+            // If we can't fit the entire argument, stop here
+            break;
+          }
+          
+          i++;
+        }
+        
+        if (total_len > 512) {
+          fprintf(2, "Error: Message length exceeds 512 characters\n");
+        } else {
+          char *current = message;
+          char *os_pos = strstr(current, "os");
+          
+          if (os_pos) {
+            // We have at least one occurrence of "os"
+            while (os_pos) {
+              // Print the part before "os"
+              int prefix_len = os_pos - current;
+              if (prefix_len > 0) {
+                write(1, current, prefix_len);
+              }
+              
+              // Print "os" in blue
+              write(1, "\033[34m", 5); // Blue color code
+              write(1, "os", 2);
+              write(1, "\033[0m", 4);  // Reset color
+              
+              // Move current pointer past this "os"
+              current = os_pos + 2;
+              
+              // Find next occurrence
+              os_pos = strstr(current, "os");
+            }
+            
+            // Print any remaining text after the last "os"
+            if (*current != '\0') {
+              write(1, current, strlen(current));
+            }
+            write(1, "\n", 1);
+          } else {
+            // No "os" found, print the message as is
+            write(1, message, total_len);
+            write(1, "\n", 1);
+          }
+        }
+      }
+      exit(0);
+    }
+
     exec(ecmd->argv[0], ecmd->argv);
     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
