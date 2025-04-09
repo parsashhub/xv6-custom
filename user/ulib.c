@@ -145,3 +145,44 @@ memcpy(void *dst, const void *src, uint n)
 {
   return memmove(dst, src, n);
 }
+
+// Implementation of strstr function to find substring
+char* strstr(const char *haystack, const char *needle) {
+  int i, j;
+  int haystack_len = strlen(haystack); // Get the length of the haystack string
+  int needle_len = strlen(needle);     // Get the length of the needle string
+  
+  if (needle_len == 0)
+    return (char*)haystack; // If needle is empty, return the haystack
+  
+  if (haystack_len < needle_len)
+    return 0; // If haystack is shorter than needle, return null
+  
+  // Iterate over the haystack
+  for (i = 0; i <= haystack_len - needle_len; i++) {
+    // Check if the substring starting at i matches the needle
+    for (j = 0; j < needle_len; j++) {
+      if (haystack[i + j] != needle[j])
+        break; // Break if characters do not match
+    }
+    if (j == needle_len)
+      return (char*)(haystack + i); // Return the starting position if full match is found
+  }
+  
+  return 0;
+}
+
+char*
+strcat(char *dest, const char *src)
+{
+  char *original_dest = dest; // Save the original destination pointer
+  
+  // Move to the end of the destination string
+  while(*dest)
+    dest++;
+  
+  // Copy the source string to the end of the destination string
+  while((*dest++ = *src++) != 0);
+  
+  return original_dest;
+}
