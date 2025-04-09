@@ -55,8 +55,7 @@ struct cmd *parsecmd(char*);
 void runcmd(struct cmd*) __attribute__((noreturn));
 
 // Execute cmd.  Never returns.
-void
-runcmd(struct cmd *cmd)
+void runcmd(struct cmd *cmd)
 {
   int p[2];
   struct backcmd *bcmd;
@@ -131,10 +130,12 @@ runcmd(struct cmd *cmd)
   exit(0);
 }
 
-int
-getcmd(char *buf, int nbuf)
+int getcmd(char *buf, int nbuf)
 {
-  write(2, "$ ", 2);
+  // implement the first task
+  char *user = "$ parsa-shabanpour ";
+  write(2, user, strlen(user));
+
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF
