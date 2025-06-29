@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct thread;
 
 // bio.c
 void            binit(void);
@@ -107,6 +108,11 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 int             trigger(void);
+void exitthread();
+void freethread(struct thread *t);
+struct thread* allocthread(uint64 start_thread, uint64 stack_address, uint64 arg);
+int jointhread(uint id);
+void sleepthread(int n, uint ticks0);
 
 // swtch.S
 void            swtch(struct context*, struct context*);
