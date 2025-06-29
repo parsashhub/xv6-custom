@@ -1,3 +1,8 @@
+#include "types.h"  // For uint64 and other integer types
+#include "param.h"  // For NCPU, NPROC, etc.
+#include "riscv.h" 
+#include "spinlock.h"
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;

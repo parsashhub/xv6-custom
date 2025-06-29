@@ -57,14 +57,20 @@ void usertrap(void) {
     syscall();
   } else if ((which_dev = devintr()) != 0) {
     // ok
-  } else if (p->current_thread &&
-             p->current_thread->id != p->pid) { 
+  } else if (p->current_thread && p->current_thread->id != p->pid) {
     // If it's a non-main thread trapping
     if (r_sepc() != r_stval() ||
         r_scause() != 0xc) { // Check for specific trap conditions
-      printf("usertrap(): thread unexpected scause 0x%1x pid=%d tid=%d\n",
-             r_scause(), p->pid, p->current_thread->id);
-      printf("sepc=0x%1x stval=0x%x\n", r_sepc(), r_stval());
+      printf(
+          "usertrap(): thread unexpected scause 0x%lx pid=%d tid=%d\n", // Change
+                                                                        // %1x
+                                                                        // to
+                                                                        // %1lx
+                                                                        // or
+                                                                        // %lx
+          r_scause(), p->pid, p->current_thread->id);
+      printf("sepc=0x%lx stval=0x%lx\n", r_sepc(),
+             r_stval()); // Change %1x to %1lx and %x to %lx
     }
     exitthread(); // Terminate only the trapping thread
   } else {

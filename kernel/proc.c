@@ -406,6 +406,51 @@ int wait(uint64 addr) {
   }
 }
 
+int thread_schd(struct proc *p) {
+  if (!p->current_thread) {
+      return 1; // Indicate that a thread needs to be scheduled for the process
+  }
+
+  if (p->current_thread->state == THREAD_RUNNING) {
+      p->current_thread->state = THREAD_RUNNABLE; // If current thread is running, set to runnable
+  }
+
+  acquire(&tickslock);
+  uint ticks = ticks; // Get current ticks
+  release(&tickslock);
+
+  struct thread *next = 0;
+  struct thread *t = p->current_thread + 1; // Start searching from the next thread
+
+  for (int i = 0; i < NTHREAD; i++, t++) {
+      if (t >= p->threads + NTHREAD) {
+          t = p->threads; // Wrap around to the beginning of the thread array
+      }
+
+      if (t->state == THREAD_RUNNABLE) {
+          next = t; // Found a runnable thread
+          break;
+      } else if (t->state == THREAD_SLEEPING && ticks >= t->sleep_tick0 + t->sleep_n) {
+          next = t; // Found a sleeping thread that has finished sleeping
+          break;
+      }
+  }
+
+  if (next == 0) {
+      return 0; // No runnable or woke-up sleeping thread found
+  } else if (p->current_thread != next) {
+      next->state = THREAD_RUNNING; // Set next thread state to RUNNING
+      struct thread *oldt = p->current_thread; // Store old current thread
+      p->current_thread = next; // Update current thread of the process
+
+      if (oldt->trapframe) {
+          *oldt->trapframe = *p->trapframe; // Save old thread's trapframe
+      }
+      *p->trapframe = *next->trapframe; // Load new thread's trapframe
+  }
+  return 1; // A thread was scheduled
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -658,51 +703,6 @@ struct thread *initthread(struct proc *p) {
       p->current_thread = t; // Set current thread of the process
   }
   return p->current_thread; // Return the current thread
-}
-
-int thread_schd(struct proc *p) {
-  if (!p->current_thread) {
-      return 1; // Indicate that a thread needs to be scheduled for the process
-  }
-
-  if (p->current_thread->state == THREAD_RUNNING) {
-      p->current_thread->state = THREAD_RUNNABLE; // If current thread is running, set to runnable
-  }
-
-  acquire(&tickslock);
-  uint ticks = ticks; // Get current ticks
-  release(&tickslock);
-
-  struct thread *next = 0;
-  struct thread *t = p->current_thread + 1; // Start searching from the next thread
-
-  for (int i = 0; i < NTHREAD; i++, t++) {
-      if (t >= p->threads + NTHREAD) {
-          t = p->threads; // Wrap around to the beginning of the thread array
-      }
-
-      if (t->state == THREAD_RUNNABLE) {
-          next = t; // Found a runnable thread
-          break;
-      } else if (t->state == THREAD_SLEEPING && ticks >= t->sleep_tick0 + t->sleep_n) {
-          next = t; // Found a sleeping thread that has finished sleeping
-          break;
-      }
-  }
-
-  if (next == 0) {
-      return 0; // No runnable or woke-up sleeping thread found
-  } else if (p->current_thread != next) {
-      next->state = THREAD_RUNNING; // Set next thread state to RUNNING
-      struct thread *oldt = p->current_thread; // Store old current thread
-      p->current_thread = next; // Update current thread of the process
-
-      if (oldt->trapframe) {
-          *oldt->trapframe = *p->trapframe; // Save old thread's trapframe
-      }
-      *p->trapframe = *next->trapframe; // Load new thread's trapframe
-  }
-  return 1; // A thread was scheduled
 }
 
 struct thread *allocthread(uint64 start_thread, uint64 stack_address, uint64 arg) {
