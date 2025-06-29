@@ -1,12 +1,66 @@
-### run docker container
+## run docker container
 
 ```bash
 docker container run -it --rm -v "$(pwd)":/home/xv6/xv6-riscv wtakuo/xv6-env
 ```
-### build project
+## build project
 ```bash
 make qemu
 ```
+
+## Added Features
+
+### Custom logger
+We've implemented a simple logging system in xv6 that allows kernel code to output structured log messages with different severity levels:
+
+- **INFO**: For general information messages
+- **WARN**: For warning messages that don't prevent execution
+- **ERROR**: For error messages that indicate problems
+
+The logger is implemented in `kernel/custom_logger.c` and `kernel/custom_logger.h`. To use the logger in kernel code:
+
+```c
+#include "custom_logger.h"
+
+log_message(INFO, "This is an informational message");
+log_message(WARN, "This is a warning message");
+log_message(ERROR, "This is an error message");
+```
+
+### Custom System Calls
+We've added a custom system call to demonstrate extending the xv6 kernel functionality:
+
+- trigger() : A simple system call that demonstrates the use of the custom logger by writing an informational message to the kernel log.
+The system call is registered as number 22 in kernel/syscall.h and implemented in kernel/sysproc.c . It can be called from user programs like any other system call.
+
+To test the custom system call, we've provided a simple test program in user/trigger_test.c that calls the trigger() function. You can run it with:
+```bash
+make qemu
+trigger_test
+```
+
+### Thread Management System Calls
+We have implemented thread support in xv6 with the following system calls:
+
+- `thread(void *start_thread, int *stack_address, void *arg)`: Creates a new thread that starts execution at the function pointed to by `start_thread` with the argument `arg`. The thread uses the stack pointed to by `stack_address`.
+- `jointhread(int id)`: Waits for the thread with the specified ID to complete execution.
+
+These system calls enable multi-threading capabilities in xv6, allowing for concurrent execution within a single process.
+
+### Multi-threaded Sorting Example
+We've implemented a multi-threaded sorting algorithm in `thread_test.c` that demonstrates the use of the thread system calls. The implementation:
+
+- Divides a large array into segments
+- Creates multiple threads to sort each segment in parallel using insertion sort
+- Merges the sorted segments into a fully sorted array
+
+To run the example:
+```bash
+make qemu
+thread_test
+```
+
+This example showcases how to effectively use threads for parallel processing in xv6.
 
 ---
 
@@ -19,42 +73,4 @@ ACKNOWLEDGMENTS
 xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
 to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
 2000)).  See also https://pdos.csail.mit.edu/6.1810/, which provides
-pointers to on-line resources for v6.
-
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
-
-We are also grateful for the bug reports and patches contributed by
-Takahiro Aoyagi, Marcelo Arroyo, Silas Boyd-Wickizer, Anton Burtsev,
-carlclone, Ian Chen, Dan Cross, Cody Cutler, Mike CAT, Tej Chajed,
-Asami Doi,Wenyang Duan, eyalz800, Nelson Elhage, Saar Ettinger, Alice
-Ferrazzi, Nathaniel Filardo, flespark, Peter Froehlich, Yakir Goaron,
-Shivam Handa, Matt Harvey, Bryan Henry, jaichenhengjie, Jim Huang,
-Matúš Jókay, John Jolly, Alexander Kapshuk, Anders Kaseorg, kehao95,
-Wolfgang Keller, Jungwoo Kim, Jonathan Kimmitt, Eddie Kohler, Vadim
-Kolontsov, Austin Liew, l0stman, Pavan Maddamsetti, Imbar Marinescu,
-Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi Merimovich, Mark
-Morrissey, mtasm, Joel Nider, Hayato Ohhashi, OptimisticSide,
-phosphagos, Harry Porter, Greg Price, RayAndrew, Jude Rich, segfault,
-Ayan Shafqat, Eldar Sehayek, Yongming Shen, Fumiya Shigemitsu, snoire,
-Taojie, Cam Tenny, tyfkda, Warren Toomey, Stephen Tu, Alissa Tung,
-Rafael Ubal, Amane Uehara, Pablo Ventura, Xi Wang, WaheedHafez,
-Keiichi Watanabe, Lucas Wolf, Nicolas Wolovick, wxdao, Grant Wu, x653,
-Jindong Zhang, Icenowy Zheng, ZhUyU1997, and Zou Chang Wei.
-
-ERROR REPORTS
-
-Please send errors and suggestions to Frans Kaashoek and Robert Morris
-(kaashoek,rtm@mit.edu).  The main purpose of xv6 is as a teaching
-operating system for MIT's 6.1810, so we are more interested in
-simplifications and clarifications than new features.
-
-BUILDING AND RUNNING XV6
-
-You will need a RISC-V "newlib" tool chain from
-https://github.com/riscv/riscv-gnu-toolchain, and qemu compiled for
-riscv64-softmmu.  Once they are installed, and in your shell
-search path, you can run "make qemu".
-
----
+pointers to on-line resources for v6.        
